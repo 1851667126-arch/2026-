@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文提交倒计时</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: max(20px, env(safe-area-inset-top)) 20px 25px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.6em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            opacity: 0.95;
+            font-size: 1em;
+        }
+        
+        /* 主倒计时区域 */
+        .main-countdown {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .paper-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .countdown-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .countdown-box {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 16px 8px;
+        }
+        
+        .countdown-number {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .countdown-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+        
+        .deadline-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 16px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        /* 进度条 */
+        .progress-section {
+            padding: 24px 20px;
+            background: #f8f9fa;
+        }
+        
+        .progress-title {
+            font-size: 1.2em;
+            color: #2d3436;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .progress-bar-container {
+            background: #e0e0e0;
+            border-radius: 20px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 0.9em;
+            color: #636e72;
+            text-align: right;
+        }
+        
+        /* 论文要求 */
+        .requirements-section {
+            padding: 24px 20px;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+            font-weight: 600;
+        }
+        
+        .requirement-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: transform 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .requirement-card:active {
+            transform: scale(0.98);
+        }
+        
+        .requirement-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .requirement-icon {
+            font-size: 1.2em;
+        }
+        
+        .requirement-title {
+            font-size: 1.05em;
+            font-weight: 600;
+            color: #2d3436;
+        }
+        
+        .requirement-content {
+            color: #636e72;
+            font-size: 0.9em;
+            line-height: 1.6;
+            padding-left: 28px;
+        }
+        
+        /* 检查清单 */
+        .checklist-section {
+            padding: 24px 20px;
+            background: #f8f9fa;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+        }
+        
+        .checklist-item {
+            background: white;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .checklist-item.completed {
+            border-color: #4ecdc4;
+            background: #f0fffe;
+        }
+        
+        .checklist-item:active {
+            transform: scale(0.98);
+        }
+        
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        
+        .checklist-item.completed .checkbox {
+            background: #4ecdc4;
+            border-color: #4ecdc4;
+        }
+        
+        .checkbox-icon {
+            color: white;
+            font-size: 1em;
+            display: none;
+        }
+        
+        .checklist-item.completed .checkbox-icon {
+            display: block;
+        }
+        
+        .checklist-text {
+            flex: 1;
+            font-size: 0.95em;
+            color: #2d3436;
+            line-height: 1.5;
+        }
+        
+        .checklist-item.completed .checklist-text {
+            color: #636e72;
+        }
+        
+        /* 紧急提醒样式 */
+        .urgent {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .warning-banner {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.05em;
+            display: none;
+        }
+        
+        .warning-banner.show {
+            display: block;
+        }
+        
+        /* 课程切换标签 */
+        .course-tab {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: #f5f7fa;
+            color: #636e72;
+            font-size: 0.95em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
+        }
+        
+        .course-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .course-tab:active {
+            transform: scale(0.96);
+        }
+        
+        .course-content {
+            display: none;
+        }
+        
+        .course-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 428px) {
+            .countdown-display {
+                gap: 8px;
+            }
+            
+            .countdown-number {
+                font-size: 1.6em;
+            }
+            
+            .countdown-label {
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 论文提交倒计时</h1>
+            <p>2026年春季学期</p>
+        </div>
+        
+        <!-- 紧急提醒横幅 -->
+        <div class="warning-banner" id="warningBanner">
+            ⚠️ 距离截止不足24小时！
+        </div>
+        
+        <!-- 课程切换标签 -->
+        <div style="background: white; padding: 12px 20px; display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <button class="course-tab active" onclick="switchCourse(0)">城市空间</button>
+            <button class="course-tab" onclick="switchCourse(1)">香港节日</button>
+            <button class="course-tab" onclick="switchCourse(2)">必修课</button>
+            <button class="course-tab" onclick="switchCourse(3)">普通人</button>
+        </div>
+        
+        <!-- 主倒计时 - 城市空间 -->
+        <div class="main-countdown course-content active" id="mainCountdown0">
+            <div class="paper-title">
+                城市空间的塑造及其内涵<br>期末论文
+            </div>
+            
+            <div class="countdown-display">
+                <div class="countdown-box">
+                    <span class="countdown-number" id="days0">0</span>
+                    <span class="countdown-label">天</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="hours0">0</span>
+                    <span class="countdown-label">时</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="minutes0">0</span>
+                    <span class="countdown-label">分</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="seconds0">0</span>
+                    <span class="countdown-label">秒</span>
+                </div>
+            </div>
+            
+            <div class="deadline-info">
+                <strong>📅 截止时间：</strong>2026年4月23日 23:59:59<br>
+                <strong>📤 提交方式：</strong>上传至 VeriGuide
+            </div>
+        </div>
+        
+        <!-- 主倒计时 - 香港节日 -->
+        <div class="main-countdown course-content" id="mainCountdown1">
+            <div class="paper-title">
+                香港传统的中国节日<br>期末论文
+            </div>
+            
+            <div class="countdown-display">
+                <div class="countdown-box">
+                    <span class="countdown-number" id="days1">0</span>
+                    <span class="countdown-label">天</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="hours1">0</span>
+                    <span class="countdown-label">时</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="minutes1">0</span>
+                    <span class="countdown-label">分</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="seconds1">0</span>
+                    <span class="countdown-label">秒</span>
+                </div>
+            </div>
+            
+            <div class="deadline-info">
+                <strong>📅 截止时间：</strong>2026年4月27日（周一）17:00:00<br>
+                <strong>📤 提交方式：</strong>VeriGuide + 邮件提交<br>
+                <strong>📧 邮箱：</strong>mukchima@cuhk.edu.hk
+            </div>
+        </div>
+        
+        <!-- 主倒计时 - 必修课 -->
+        <div class="main-countdown course-content" id="mainCountdown2">
+            <div class="paper-title">
+                比较及公众史学<br>期末论文
+            </div>
+            
+            <div class="countdown-display">
+                <div class="countdown-box">
+                    <span class="countdown-number" id="days2">0</span>
+                    <span class="countdown-label">天</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="hours2">0</span>
+                    <span class="countdown-label">时</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="minutes2">0</span>
+                    <span class="countdown-label">分</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="seconds2">0</span>
+                    <span class="countdown-label">秒</span>
+                </div>
+            </div>
+            
+            <div class="deadline-info">
+                <strong>📅 截止时间：</strong>2026年4月19日（周日）23:59:59<br>
+                <strong>📤 提交方式：</strong>上传至 VeriGuide
+            </div>
+        </div>
+        
+        <!-- 主倒计时 - 普通人 -->
+        <div class="main-countdown course-content" id="mainCountdown3">
+            <div class="paper-title">
+                近代中国的普通人<br>期末论文
+            </div>
+            
+            <div class="countdown-display">
+                <div class="countdown-box">
+                    <span class="countdown-number" id="days3">0</span>
+                    <span class="countdown-label">天</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="hours3">0</span>
+                    <span class="countdown-label">时</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="minutes3">0</span>
+                    <span class="countdown-label">分</span>
+                </div>
+                <div class="countdown-box">
+                    <span class="countdown-number" id="seconds3">0</span>
+                    <span class="countdown-label">秒</span>
+                </div>
+            </div>
+            
+            <div class="deadline-info">
+                <strong>📅 截止时间：</strong>2026年4月28日（周一）12:00:00<br>
+                <strong>📤 提交方式：</strong>VeriGuide + 邮件纸质版<br>
+                <strong>📧 邮箱：</strong>1155248766@link.cuhk.edu.hk
+            </div>
+        </div>
+        
+        <!-- 进度条 -->
+        <div class="progress-section">
+            <div class="progress-title">⏳ 时间进度</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">加载中...</div>
+        </div>
+        
+        <!-- 论文要求 - 城市空间 -->
+        <div class="requirements-section course-content active" id="requirements0">
+            <div class="section-title">📋 论文要求</div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📖</span>
+                    <span class="requirement-title">论文主题</span>
+                </div>
+                <div class="requirement-content">
+                    选择任意城市或者城市相关议题撰写论文
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📏</span>
+                    <span class="requirement-title">字数要求</span>
+                </div>
+                <div class="requirement-content">
+                    6000-8000字（不含参考文献）
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📤</span>
+                    <span class="requirement-title">提交方式</span>
+                </div>
+                <div class="requirement-content">
+                    提交至 VeriGuide 系统
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">⏰</span>
+                    <span class="requirement-title">截止时间</span>
+                </div>
+                <div class="requirement-content">
+                    2026年4月23日 23:59:59（北京时间）
+                </div>
+            </div>
+        </div>
+        
+        <!-- 论文要求 - 香港节日 -->
+        <div class="requirements-section course-content" id="requirements1">
+            <div class="section-title">📋 论文要求</div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📖</span>
+                    <span class="requirement-title">论文主题</span>
+                </div>
+                <div class="requirement-content">
+                    选取任何一项「香港传统中国节日」作为学期论文题目，结合田野与文献资料
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📏</span>
+                    <span class="requirement-title">字数要求</span>
+                </div>
+                <div class="requirement-content">
+                    约5000字
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📤</span>
+                    <span class="requirement-title">提交方式</span>
+                </div>
+                <div class="requirement-content">
+                    1. 提交到 VeriGuide<br>
+                    2. 签署 Declaration form<br>
+                    3. 将论文及 Declaration form 电邮至：<br>
+                    <strong>mukchima@cuhk.edu.hk</strong>
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">⏰</span>
+                    <span class="requirement-title">截止时间</span>
+                </div>
+                <div class="requirement-content">
+                    2026年4月27日（星期一）下午5:00前
+                </div>
+            </div>
+        </div>
+        
+        <!-- 论文要求 - 必修课 -->
+        <div class="requirements-section course-content" id="requirements2">
+            <div class="section-title">📋 论文要求</div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📖</span>
+                    <span class="requirement-title">论文主题</span>
+                </div>
+                <div class="requirement-content">
+                    A Critique of Four Shanghai Lil Films<br>
+                    （四部上海莉莉电影的评论）
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📏</span>
+                    <span class="requirement-title">字数要求</span>
+                </div>
+                <div class="requirement-content">
+                    论文正文至少4000个英文单词（含脚注）<br>
+                    另附参考文献（不计入字数）
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📝</span>
+                    <span class="requirement-title">引用格式</span>
+                </div>
+                <div class="requirement-content">
+                    芝加哥格式手册（Notes and Bibliography）<br>
+                    <a href="https://www.chicagomanualofstyle.org/tools_citationguide/citation-guide-1.html" target="_blank" style="color: #667eea;">查看格式指南 →</a>
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📤</span>
+                    <span class="requirement-title">提交方式</span>
+                </div>
+                <div class="requirement-content">
+                    提交至 VeriGuide 系统
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">⏰</span>
+                    <span class="requirement-title">截止时间</span>
+                </div>
+                <div class="requirement-content">
+                    2026年4月19日（星期日）23:59:59
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">💯</span>
+                    <span class="requirement-title">成绩占比</span>
+                </div>
+                <div class="requirement-content">
+                    占总成绩的70%
+                </div>
+            </div>
+        </div>
+        
+        <!-- 论文要求 - 普通人 -->
+        <div class="requirements-section course-content" id="requirements3">
+            <div class="section-title">📋 论文要求</div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📖</span>
+                    <span class="requirement-title">论文主题</span>
+                </div>
+                <div class="requirement-content">
+                    谁是新女性，谁的新女性？<br>
+                    请在思考这一问题的前提下，自拟题目作文
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📏</span>
+                    <span class="requirement-title">字数要求</span>
+                </div>
+                <div class="requirement-content">
+                    7000-8000字（正文字数）<br>
+                    请考虑如何利用有限篇幅，条理清晰地讨论问题
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📝</span>
+                    <span class="requirement-title">格式要求</span>
+                </div>
+                <div class="requirement-content">
+                    1. 以论文形式撰写，请勿以答题形式完成<br>
+                    2. 注释参考《历史研究》（简体）或《新史学》（台湾繁体）格式
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">⚠️</span>
+                    <span class="requirement-title">重要提醒</span>
+                </div>
+                <div class="requirement-content">
+                    1. 请勿使用AI撰文<br>
+                    2. 文章需通过维誉系统<br>
+                    3. 附上签名版维誉说明书
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">📤</span>
+                    <span class="requirement-title">提交方式</span>
+                </div>
+                <div class="requirement-content">
+                    将论文纸质版交至助教老师邮箱：<br>
+                    <strong>1155248766@link.cuhk.edu.hk</strong>
+                </div>
+            </div>
+            
+            <div class="requirement-card">
+                <div class="requirement-header">
+                    <span class="requirement-icon">⏰</span>
+                    <span class="requirement-title">截止时间</span>
+                </div>
+                <div class="requirement-content">
+                    2026年4月28日（星期一）中午12:00前
+                </div>
+            </div>
+        </div>
+        
+        <!-- 检查清单 - 城市空间 -->
+        <div class="checklist-section course-content active" id="checklist0">
+            <div class="section-title">✅ 提交前检查清单</div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 0)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文字数达到 6000-8000 字</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 1)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">包含完整的参考文献列表</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 2)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">检查格式规范（字体、行距、页边距）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 3)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">全文校对（错别字、语法、标点）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 4)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">确认引用格式正确</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 5)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文标题、姓名、学号齐全</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 6)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">文件格式正确（PDF/Word）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(0, 7)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已在 VeriGuide 系统成功提交</div>
+            </div>
+        </div>
+        
+        <!-- 检查清单 - 香港节日 -->
+        <div class="checklist-section course-content" id="checklist1">
+            <div class="section-title">✅ 提交前检查清单</div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 0)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文字数达到约 5000 字</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 1)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">结合了田野调查与文献资料</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 2)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">包含完整的参考文献列表</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 3)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">检查格式规范（字体、行距、页边距）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 4)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">全文校对（错别字、语法、标点）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 5)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已签署 Declaration form</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 6)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已在 VeriGuide 系统成功提交</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(1, 7)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已将论文及 Declaration form 发送至 mukchima@cuhk.edu.hk</div>
+            </div>
+        </div>
+        
+        <!-- 检查清单 - 必修课 -->
+        <div class="checklist-section course-content" id="checklist2">
+            <div class="section-title">✅ 提交前检查清单</div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 0)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文正文达到至少 4000 个英文单词（含脚注）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 1)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">包含完整的参考文献列表</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 2)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">引用格式符合芝加哥格式手册要求</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 3)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文主题为"四部上海莉莉电影的评论"</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 4)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">全文校对（拼写、语法、标点）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 5)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">检查格式规范</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 6)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文标题、姓名、学号齐全</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(2, 7)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已在 VeriGuide 系统成功提交</div>
+            </div>
+        </div>
+        
+        <!-- 检查清单 - 普通人 -->
+        <div class="checklist-section course-content" id="checklist3">
+            <div class="section-title">✅ 提交前检查清单</div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 0)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">论文正文达到 7000-8000 字</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 1)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">以论文形式撰写（非答题形式）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 2)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">围绕"谁是新女性，谁的新女性"主题展开</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 3)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">注释格式符合《历史研究》或《新史学》要求</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 4)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">全文校对（错别字、语法、标点）</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 5)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">确认未使用AI撰文</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 6)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已通过维誉系统并附上签名版维誉说明书</div>
+            </div>
+            
+            <div class="checklist-item" onclick="toggleCheck(3, 7)">
+                <div class="checkbox">
+                    <span class="checkbox-icon">✓</span>
+                </div>
+                <div class="checklist-text">已将论文纸质版交至 1155248766@link.cuhk.edu.hk</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 论文截止时间
+        const deadlines = [
+            new Date('2026-04-23T23:59:59').getTime(), // 城市空间
+            new Date('2026-04-27T17:00:00').getTime(), // 香港节日
+            new Date('2026-04-19T23:59:59').getTime(), // 必修课
+            new Date('2026-04-28T12:00:00').getTime()  // 普通人
+        ];
+        
+        // 假设开始时间为学期开始
+        const startTime = new Date('2026-01-15T00:00:00').getTime();
+        
+        // 当前选中的课程
+        let currentCourse = 0;
+        
+        // 检查清单状态（分别存储四门课）
+        let checklistStates = [
+            JSON.parse(localStorage.getItem('paperChecklist0') || '[]'),
+            JSON.parse(localStorage.getItem('paperChecklist1') || '[]'),
+            JSON.parse(localStorage.getItem('paperChecklist2') || '[]'),
+            JSON.parse(localStorage.getItem('paperChecklist3') || '[]')
+        ];
+        
+        // 切换课程
+        function switchCourse(index) {
+            currentCourse = index;
+            
+            // 更新标签状态
+            const tabs = document.querySelectorAll('.course-tab');
+            tabs.forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+            
+            // 更新内容显示
+            const contents = document.querySelectorAll('.course-content');
+            contents.forEach((content, i) => {
+                const courseIndex = parseInt(content.id.match(/\d+/)?.[0] ?? 0);
+                content.classList.toggle('active', courseIndex === index);
+            });
+            
+            // 更新警告横幅
+            updateWarning();
+        }
+        
+        // 初始化检查清单
+        function initChecklist() {
+            [0, 1, 2, 3].forEach(courseIndex => {
+                const items = document.querySelectorAll(`#checklist${courseIndex} .checklist-item`);
+                items.forEach((item, index) => {
+                    if (checklistStates[courseIndex][index]) {
+                        item.classList.add('completed');
+                    }
+                });
+            });
+        }
+        
+        // 切换检查项
+        function toggleCheck(courseIndex, itemIndex) {
+            const items = document.querySelectorAll(`#checklist${courseIndex} .checklist-item`);
+            items[itemIndex].classList.toggle('completed');
+            checklistStates[courseIndex][itemIndex] = items[itemIndex].classList.contains('completed');
+            localStorage.setItem(`paperChecklist${courseIndex}`, JSON.stringify(checklistStates[courseIndex]));
+        }
+        
+        // 更新警告横幅
+        function updateWarning() {
+            const now = new Date().getTime();
+            const distance = deadlines[currentCourse] - now;
+            const warningBanner = document.getElementById('warningBanner');
+            const mainCountdown = document.getElementById(`mainCountdown${currentCourse}`);
+            
+            if (distance < 24 * 60 * 60 * 1000 && distance > 0) {
+                warningBanner.classList.add('show');
+                mainCountdown.classList.add('urgent');
+            } else {
+                warningBanner.classList.remove('show');
+                mainCountdown.classList.remove('urgent');
+            }
+        }
+        
+        // 更新倒计时
+        function updateCountdown() {
+            const now = new Date().getTime();
+            
+            [0, 1, 2, 3].forEach(courseIndex => {
+                const distance = deadlines[courseIndex] - now;
+                
+                if (distance < 0) {
+                    document.getElementById(`days${courseIndex}`).textContent = '0';
+                    document.getElementById(`hours${courseIndex}`).textContent = '0';
+                    document.getElementById(`minutes${courseIndex}`).textContent = '0';
+                    document.getElementById(`seconds${courseIndex}`).textContent = '0';
+                    
+                    const mainCountdown = document.getElementById(`mainCountdown${courseIndex}`);
+                    mainCountdown.innerHTML = `
+                        <div class="paper-title" style="padding: 40px 20px;">
+                            ⏰ 提交截止时间已过<br>
+                            <div style="font-size: 0.7em; margin-top: 12px; opacity: 0.9;">请联系老师确认是否接受迟交</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                document.getElementById(`days${courseIndex}`).textContent = days;
+                document.getElementById(`hours${courseIndex}`).textContent = hours.toString().padStart(2, '0');
+                document.getElementById(`minutes${courseIndex}`).textContent = minutes.toString().padStart(2, '0');
+                document.getElementById(`seconds${courseIndex}`).textContent = seconds.toString().padStart(2, '0');
+            });
+            
+            // 更新进度条（基于当前选中的课程）
+            updateProgress(now);
+            updateWarning();
+        }
+        
+        // 更新进度条
+        function updateProgress(now) {
+            const totalTime = deadlines[currentCourse] - startTime;
+            const elapsed = now - startTime;
+            const percentage = Math.min((elapsed / totalTime) * 100, 100);
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = 
+                `时间已过 ${percentage.toFixed(1)}%`;
+        }
+        
+        // 初始化
+        initChecklist();
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
